@@ -17,6 +17,7 @@ export default function AccountManagement() {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [editingId, setEditingId] = useState<string | null>(null)
   const [confirmingId, setConfirmingId] = useState<string | null>(null)
+  const [errors, setErrors] = useState<{ [key: string]: string }>({})
   const [form, setForm] = useState<{
     name: string
     category: AccountCategory
@@ -45,9 +46,24 @@ export default function AccountManagement() {
     }
   }
 
+  const validateForm = () => {
+    const newErrors: { [key: string]: string } = {}
+    if (!form.name.trim()) {
+      newErrors.name = '口座名を入力してください'
+    }
+    const balance = parseInt(form.balance)
+    if (!form.balance.trim() || isNaN(balance)) {
+      newErrors.balance = '有効な残高を入力してください'
+    }
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user) return
+
+    if (!validateForm()) return
 
     try {
       await addAccount(user.uid, {
@@ -74,6 +90,8 @@ export default function AccountManagement() {
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user || !editingId) return
+
+    if (!validateForm()) return
 
     try {
       await updateAccount(user.uid, editingId, {
@@ -132,9 +150,10 @@ export default function AccountManagement() {
             name="name"
             value={form.name}
             onChange={handleChange}
-            className="w-full p-2 border rounded"
+            className={`w-full p-2 border rounded ${errors.name ? 'border-red-500' : ''}`}
             required
           />
+          {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
         </div>
         <div>
           <label className="block mb-2">カテゴリ</label>
@@ -156,9 +175,10 @@ export default function AccountManagement() {
             name="balance"
             value={form.balance}
             onChange={handleChange}
-            className="w-full p-2 border rounded"
+            className={`w-full p-2 border rounded ${errors.balance ? 'border-red-500' : ''}`}
             required
           />
+          {errors.balance && <p className="text-red-500 text-sm mt-1">{errors.balance}</p>}
         </div>
         <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
           {editingId ? '更新' : '追加'}

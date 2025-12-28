@@ -19,6 +19,7 @@ export default function TaskEdit({ params }: { params: { id: string } }) {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [session, setSession] = useState<MonthlySession | null>(null)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [errors, setErrors] = useState<{ [key: string]: string }>({})
   const [form, setForm] = useState({
     amount: '',
     fromAccountId: '',
@@ -60,9 +61,31 @@ export default function TaskEdit({ params }: { params: { id: string } }) {
     }
   }
 
+  const validateForm = () => {
+    const newErrors: { [key: string]: string } = {}
+    const amount = parseInt(form.amount)
+    if (!form.amount.trim() || isNaN(amount) || amount <= 0) {
+      newErrors.amount = '有効な金額を入力してください'
+    }
+    if (task.type === 'withdraw' && !form.fromAccountId) {
+      newErrors.fromAccountId = '出金元口座を選択してください'
+    }
+    if ((task.type === 'deposit' || task.type === 'charge') && !form.toAccountId) {
+      newErrors.toAccountId = '入金先口座を選択してください'
+    }
+    if (task.type === 'transfer' && (!form.fromAccountId || !form.toAccountId)) {
+      newErrors.fromAccountId = newErrors.fromAccountId || '出金元口座を選択してください'
+      newErrors.toAccountId = newErrors.toAccountId || '入金先口座を選択してください'
+    }
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user || !task) return
+
+    if (!validateForm()) return
 
     try {
       await updateBudgetTask(user.uid, task.id, {
@@ -108,9 +131,10 @@ export default function TaskEdit({ params }: { params: { id: string } }) {
             name="amount"
             value={form.amount}
             onChange={handleChange}
-            className="w-full p-2 border rounded"
+            className={`w-full p-2 border rounded ${errors.amount ? 'border-red-500' : ''}`}
             required
           />
+          {errors.amount && <p className="text-red-500 text-sm mt-1">{errors.amount}</p>}
         </div>
         {(task.type === 'withdraw' || task.type === 'transfer') && (
           <div>
@@ -119,7 +143,7 @@ export default function TaskEdit({ params }: { params: { id: string } }) {
               name="fromAccountId"
               value={form.fromAccountId}
               onChange={handleChange}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${errors.fromAccountId ? 'border-red-500' : ''}`}
             >
               <option value="">選択</option>
               {accounts.map((acc) => (
@@ -128,6 +152,7 @@ export default function TaskEdit({ params }: { params: { id: string } }) {
                 </option>
               ))}
             </select>
+            {errors.fromAccountId && <p className="text-red-500 text-sm mt-1">{errors.fromAccountId}</p>}
           </div>
         )}
         {(task.type === 'deposit' || task.type === 'transfer' || task.type === 'charge') && (
@@ -137,7 +162,7 @@ export default function TaskEdit({ params }: { params: { id: string } }) {
               name="toAccountId"
               value={form.toAccountId}
               onChange={handleChange}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${errors.toAccountId ? 'border-red-500' : ''}`}
             >
               <option value="">選択</option>
               {accounts.map((acc) => (
@@ -146,6 +171,7 @@ export default function TaskEdit({ params }: { params: { id: string } }) {
                 </option>
               ))}
             </select>
+            {errors.toAccountId && <p className="text-red-500 text-sm mt-1">{errors.toAccountId}</p>}
           </div>
         )}
         <div>
