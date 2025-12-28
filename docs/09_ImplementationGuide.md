@@ -41,15 +41,18 @@
 ### 3.1 初回設定画面
 
 #### 実装対象
+
 - Page：`/setup/page.tsx`
 - Hook：`useInitialSetup`
 
 #### 主な処理
+
 - Firebase Auth で匿名 or メールログイン
 - 初期口座データ作成
 - 初回 MonthlySession 作成
 
 #### 注意点
+
 - 初回設定完了フラグを Firestore に保存
 - 未設定ユーザーは常に `/setup` にリダイレクト
 
@@ -58,10 +61,12 @@
 ### 3.2 ホーム画面
 
 #### 実装対象
+
 - Page：`/home/page.tsx`
 - Hook：`useHomeViewModel`
 
 #### 主な処理
+
 - 今月の MonthlySession を Firestore から取得
 - タスク一覧表示
 - タスク完了処理
@@ -69,6 +74,7 @@
 - ATM必要額の計算
 
 #### 注意点
+
 - 残高更新ロジックは Hook 内で完結させる
 - UI コンポーネントは計算ロジックを持たない
 
@@ -77,14 +83,17 @@
 ### 3.3 タスク詳細／編集画面
 
 #### 実装対象
+
 - Page：`/tasks/[taskId]/page.tsx`
 - Hook：`useTaskDetailViewModel`
 
 #### 主な処理
+
 - タスク取得・編集
 - 保存／削除
 
 #### 注意点
+
 - 新規作成時は `taskId = new` 扱い
 - Firestore 更新は保存時のみ
 
@@ -93,10 +102,12 @@
 ### 3.4 タスク追加画面
 
 #### 実装対象
+
 - Page：`/tasks/new/page.tsx`
 - Hook：`useTaskAddViewModel`
 
 #### 主な処理
+
 - タスク種別選択
 - 初期値入りタスク生成
 - 詳細画面へ遷移
@@ -106,14 +117,17 @@
 ### 3.5 月次設定画面
 
 #### 実装対象
+
 - Page：`/settings/monthly/page.tsx`
 - Hook：`useMonthlySettingViewModel`
 
 #### 主な処理
+
 - 給与日・予算設定
 - 月次テンプレート適用
 
 #### 注意点
+
 - テンプレ適用は重複防止ロジック必須
 - 再適用時は差分のみ追加
 
@@ -122,15 +136,18 @@
 ### 3.6 口座管理画面
 
 #### 実装対象
+
 - Page：`/accounts/page.tsx`
 - Hook：`useAccountManagementViewModel`
 
 #### 主な処理
+
 - 口座一覧表示
 - 残高修正
 - 口座追加・削除
 
 #### 注意点
+
 - 残高修正は「手動補正」として履歴に残す（※仮定）
 
 ---
