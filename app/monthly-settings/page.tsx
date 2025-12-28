@@ -9,6 +9,7 @@ import {
   getTaskTemplates,
   addBudgetTask,
   getBudgetTasks,
+  createNewMonthlySession,
 } from '../../lib/firestore'
 import { MonthlySession, TaskTemplate } from '../../lib/types'
 
@@ -135,6 +136,23 @@ export default function MonthlySettings() {
     }
   }
 
+  const handleStartNewMonth = async () => {
+    if (!user || !session) return
+
+    setLoading(true)
+    setMessage('')
+    try {
+      await createNewMonthlySession(user.uid, session)
+      setMessage('新しい月を開始しました')
+      setTimeout(() => router.push('/'), 1000)
+    } catch (error) {
+      console.error(error)
+      setMessage('エラーが発生しました')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
@@ -200,6 +218,18 @@ export default function MonthlySettings() {
           {loading ? '保存中...' : '保存'}
         </button>
       </form>
+
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold mb-4">新しい月を開始</h2>
+        <p className="mb-4">現在の設定を引き継いで新しい月次セッションを作成し、デフォルトテンプレートを適用します。</p>
+        <button
+          onClick={handleStartNewMonth}
+          disabled={loading}
+          className="bg-orange-500 text-white px-4 py-2 rounded disabled:opacity-50"
+        >
+          {loading ? '作成中...' : '新しい月を開始'}
+        </button>
+      </div>
 
       <div className="mt-8">
         <h2 className="text-xl font-semibold mb-4">テンプレート適用</h2>

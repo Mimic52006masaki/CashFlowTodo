@@ -252,3 +252,37 @@ export const updateAppUser = async (userId: string, updates: Partial<AppUser>) =
   const docRef = doc(db, 'users', userId)
   await updateDoc(docRef, updates)
 }
+
+// Create new monthly session and apply default template
+export const createNewMonthlySession = async (
+  userId: string,
+  previousSession: MonthlySession
+): Promise<string> => {
+  const newSalaryDate = new Date(previousSession.salaryDate)
+  newSalaryDate.setMonth(newSalaryDate.getMonth() + 1)
+
+  const sessionId = await addMonthlySession(userId, {
+    salaryDate: newSalaryDate,
+    salaryAmount: previousSession.salaryAmount,
+    carryoverAmount: previousSession.carryoverAmount,
+    budgetAmount: previousSession.budgetAmount,
+  })
+
+  // Apply default template
+  const appUser = await getAppUser(userId)
+  if (appUser?.defaultTemplateId) {
+    const templates = await getTaskTemplates(userId)
+    const defaultTemplate = templates.find((t) => t.id === appUser.defaultTemplateId)
+    if (defaultTemplate) {
+      for (const task of defaultTemplate.tasks) {
+        await addBudgetTask(userId, {
+          ...task,
+          sessionId,
+          isCompleted: false,
+        })
+      }
+    }
+  }
+
+  return sessionId
+}
