@@ -18,6 +18,8 @@ export default function Home() {
   const [tasks, setTasks] = useState<BudgetTask[]>([])
   const [session, setSession] = useState<MonthlySession | null>(null)
   const [loading, setLoading] = useState(true)
+  const [completingTaskId, setCompletingTaskId] = useState<string | null>(null)
+  const [message, setMessage] = useState<string>('')
 
   useEffect(() => {
     if (!user) {
@@ -48,11 +50,17 @@ export default function Home() {
 
   const handleCompleteTask = async (taskId: string) => {
     if (!user) return
+    setCompletingTaskId(taskId)
     try {
       await completeTask(user.uid, taskId)
+      setMessage('タスクを完了しました')
       fetchData()
     } catch (error) {
       console.error(error)
+      setMessage('タスク完了に失敗しました')
+    } finally {
+      setCompletingTaskId(null)
+      setTimeout(() => setMessage(''), 3000)
     }
   }
 
@@ -62,7 +70,11 @@ export default function Home() {
   }
 
   if (!user || loading) {
-    return <div>Loading...</div>
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      </div>
+    )
   }
 
   const completedTasks = tasks.filter((t) => t.isCompleted).length
@@ -101,6 +113,11 @@ export default function Home() {
           </button>
         </div>
       </header>
+      {message && (
+        <div className="mb-4 p-3 bg-green-100 text-green-700 rounded">
+          {message}
+        </div>
+      )}
 
       {session ? (
         <>
@@ -130,15 +147,19 @@ export default function Home() {
                   className="flex items-center p-2 border rounded cursor-pointer"
                   onClick={() => router.push(`/task/${task.id}`)}
                 >
-                  <input
-                    type="checkbox"
-                    checked={task.isCompleted}
-                    onChange={(e) => {
-                      e.stopPropagation()
-                      !task.isCompleted && handleCompleteTask(task.id)
-                    }}
-                    className="mr-3"
-                  />
+                  {completingTaskId === task.id ? (
+                    <div className="mr-3 animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>
+                  ) : (
+                    <input
+                      type="checkbox"
+                      checked={task.isCompleted}
+                      onChange={(e) => {
+                        e.stopPropagation()
+                        !task.isCompleted && handleCompleteTask(task.id)
+                      }}
+                      className="mr-3"
+                    />
+                  )}
                   <span
                     className={
                       task.isCompleted ? 'line-through text-gray-500' : ''

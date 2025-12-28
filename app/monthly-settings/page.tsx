@@ -20,6 +20,7 @@ export default function MonthlySettings() {
   const [selectedTemplateId, setSelectedTemplateId] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const [errors, setErrors] = useState<{[key: string]: string}>({})
   const [form, setForm] = useState({
     salaryDate: '',
     salaryAmount: '',
@@ -56,9 +57,29 @@ export default function MonthlySettings() {
     }
   }
 
+  const validateForm = () => {
+    const newErrors: {[key: string]: string} = {}
+    if (!form.salaryDate) {
+      newErrors.salaryDate = '給与日を選択してください'
+    }
+    if (!form.salaryAmount || isNaN(Number(form.salaryAmount)) || Number(form.salaryAmount) <= 0) {
+      newErrors.salaryAmount = '有効な給与額を入力してください'
+    }
+    if (form.carryoverAmount && (isNaN(Number(form.carryoverAmount)))) {
+      newErrors.carryoverAmount = '有効な前月繰越額を入力してください'
+    }
+    if (!form.budgetAmount || isNaN(Number(form.budgetAmount)) || Number(form.budgetAmount) <= 0) {
+      newErrors.budgetAmount = '有効な今月の予算を入力してください'
+    }
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user || !session) return
+
+    if (!validateForm()) return
 
     setLoading(true)
     setMessage('')
@@ -137,6 +158,7 @@ export default function MonthlySettings() {
             className="w-full p-2 border rounded"
             required
           />
+          {errors.salaryDate && <p className="text-red-500 text-sm mt-1">{errors.salaryDate}</p>}
         </div>
         <div>
           <label className="block mb-2">給与額</label>
@@ -148,6 +170,7 @@ export default function MonthlySettings() {
             className="w-full p-2 border rounded"
             required
           />
+          {errors.salaryAmount && <p className="text-red-500 text-sm mt-1">{errors.salaryAmount}</p>}
         </div>
         <div>
           <label className="block mb-2">前月繰越額</label>
@@ -159,6 +182,7 @@ export default function MonthlySettings() {
             className="w-full p-2 border rounded"
             required
           />
+          {errors.carryoverAmount && <p className="text-red-500 text-sm mt-1">{errors.carryoverAmount}</p>}
         </div>
         <div>
           <label className="block mb-2">今月の予算</label>
@@ -170,6 +194,7 @@ export default function MonthlySettings() {
             className="w-full p-2 border rounded"
             required
           />
+          {errors.budgetAmount && <p className="text-red-500 text-sm mt-1">{errors.budgetAmount}</p>}
         </div>
         <button type="submit" disabled={loading} className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50">
           {loading ? '保存中...' : '保存'}

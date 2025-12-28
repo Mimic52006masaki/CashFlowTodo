@@ -18,6 +18,7 @@ export default function TaskEdit({ params }: { params: { id: string } }) {
   const [task, setTask] = useState<BudgetTask | null>(null)
   const [accounts, setAccounts] = useState<Account[]>([])
   const [session, setSession] = useState<MonthlySession | null>(null)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [form, setForm] = useState({
     amount: '',
     fromAccountId: '',
@@ -83,6 +84,8 @@ export default function TaskEdit({ params }: { params: { id: string } }) {
       router.push('/')
     } catch (error) {
       console.error(error)
+    } finally {
+      setConfirmingDelete(false)
     }
   }
 
@@ -161,13 +164,35 @@ export default function TaskEdit({ params }: { params: { id: string } }) {
           </button>
           <button
             type="button"
-            onClick={handleDelete}
+            onClick={() => setConfirmingDelete(true)}
             className="bg-red-500 text-white px-4 py-2 rounded"
           >
             削除
           </button>
         </div>
       </form>
+
+      {confirmingDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded shadow-lg">
+            <p className="mb-4">本当にこのタスクを削除しますか？</p>
+            <div className="flex space-x-4">
+              <button
+                onClick={handleDelete}
+                className="bg-red-500 text-white px-4 py-2 rounded"
+              >
+                はい
+              </button>
+              <button
+                onClick={() => setConfirmingDelete(false)}
+                className="bg-gray-500 text-white px-4 py-2 rounded"
+              >
+                いいえ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
