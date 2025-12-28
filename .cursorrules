@@ -1,0 +1,54 @@
+# Cursor AI Rules for this Repository
+
+## Project Context
+- This project is a personal finance task management app.
+- The app focuses on executing monthly money-related tasks (transfers, withdrawals, payments).
+- It is NOT a traditional expense tracking or accounting app.
+- Budget sessions are based on payday cycles.
+
+## Tech Stack (Strict)
+- Frontend: Next.js (App Router)
+- Backend: Firebase (Firestore, Auth)
+- Language: TypeScript
+- Styling: Minimal (CSS Modules or Tailwind if already present)
+- State management: React hooks / simple context only
+
+❗ Do NOT introduce other frameworks, databases, or state management libraries without explicit instruction.
+
+## Architecture Rules
+- Follow a simple layered structure:
+  - UI (components)
+  - ViewModel / Logic (hooks or services)
+  - Data access (Firebase repositories)
+- Keep logic out of UI components as much as possible.
+- Avoid over-engineering (no DDD, no Clean Architecture unless requested).
+
+## Data & Domain Rules
+- BudgetSession is the core domain unit (monthly cycle).
+- Tasks represent executable money actions.
+- Account balances are updated ONLY when a task is marked as completed.
+- Never auto-sync with banks or external services.
+
+## Coding Rules
+- Prioritize readability over cleverness.
+- Prefer explicit logic over abstractions.
+- Avoid premature optimization.
+- Use clear naming aligned with the domain (Account, Task, BudgetSession).
+
+## MVP Scope Control
+- Implement only what is defined as "Must" in the requirements.
+- Features marked as "Nice to Have" should be ignored unless explicitly requested.
+- If a feature is unclear, ask for clarification instead of guessing.
+
+## UI Rules
+- Favor simple list-based UI.
+- No complex animations.
+- One primary action per screen.
+- Desktop-first, but responsive.
+
+## AI Behavior Rules
+- Do not invent new features.
+- Do not change the tech stack.
+- Do not refactor unrelated code.
+- When assumptions are necessary, clearly mark them with comments (e.g. // assumption).
+
