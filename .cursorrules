@@ -1,54 +1,103 @@
-# Cursor AI Rules for this Repository
+# Cursor Rules for CashFlowTodo MVP
 
-## Project Context
-- This project is a personal finance task management app.
-- The app focuses on executing monthly money-related tasks (transfers, withdrawals, payments).
-- It is NOT a traditional expense tracking or accounting app.
-- Budget sessions are based on payday cycles.
+## 0. プロジェクトの前提
 
-## Tech Stack (Strict)
-- Frontend: Next.js (App Router)
-- Backend: Firebase (Firestore, Auth)
-- Language: TypeScript
-- Styling: Minimal (CSS Modules or Tailwind if already present)
-- State management: React hooks / simple context only
+- 本プロジェクトは **給料日の資金移動を仮想的にシミュレーションする ToDo アプリ**である
+- 実際の銀行・金融APIとは一切連携しない
+- 家計簿・分析・グラフ機能は対象外
+- MVP完了を最優先とし、過剰設計は禁止
 
-❗ Do NOT introduce other frameworks, databases, or state management libraries without explicit instruction.
+---
 
-## Architecture Rules
-- Follow a simple layered structure:
-  - UI (components)
-  - ViewModel / Logic (hooks or services)
-  - Data access (Firebase repositories)
-- Keep logic out of UI components as much as possible.
-- Avoid over-engineering (no DDD, no Clean Architecture unless requested).
+## 1. 技術スタックの固定
 
-## Data & Domain Rules
-- BudgetSession is the core domain unit (monthly cycle).
-- Tasks represent executable money actions.
-- Account balances are updated ONLY when a task is marked as completed.
-- Never auto-sync with banks or external services.
+### フロントエンド
+- Next.js（App Router）
+- React
+- TypeScript
+- Tailwind CSS
 
-## Coding Rules
-- Prioritize readability over cleverness.
-- Prefer explicit logic over abstractions.
-- Avoid premature optimization.
-- Use clear naming aligned with the domain (Account, Task, BudgetSession).
+### バックエンド
+- Firebase Authentication
+- Firestore
 
-## MVP Scope Control
-- Implement only what is defined as "Must" in the requirements.
-- Features marked as "Nice to Have" should be ignored unless explicitly requested.
-- If a feature is unclear, ask for clarification instead of guessing.
+### 禁止事項
+- Redux / Zustand 等の追加状態管理ライブラリ
+- サーバーサイド計算（残高計算は必ずクライアント）
+- 不要なAPI Routesの追加
 
-## UI Rules
-- Favor simple list-based UI.
-- No complex animations.
-- One primary action per screen.
-- Desktop-first, but responsive.
+---
 
-## AI Behavior Rules
-- Do not invent new features.
-- Do not change the tech stack.
-- Do not refactor unrelated code.
-- When assumptions are necessary, clearly mark them with comments (e.g. // assumption).
+## 2. アーキテクチャルール
 
+### 2.1 状態管理
+- すべての状態は **React Hooks** で管理する
+- Firestoreのデータは「Source of Truth」ではなく **初期データ**
+- UI表示用の残高は必ず **派生Stateとして計算**
+
+### 2.2 残高計算（最重要）
+- 残高は Firestore に保存しない
+- 計算式：
+  - `initialBalance`
+  - ＋ 完了済み ToDo の To口座金額
+  - − 完了済み ToDo の From口座金額
+- 計算ロジックは1箇所に集約する（ユーティリティ関数）
+
+---
+
+## 3. Firestore 利用ルール
+
+### 3.1 データ操作
+- create / update / delete は Repository 層に集約
+- UIコンポーネントから Firestore を直接呼ばない
+
+### 3.2 Security Rules 前提
+- userId が一致しないデータ操作は禁止
+- クエリは必ず userId フィルタを含める
+
+---
+
+## 4. UI / UX 実装ルール
+
+### 4.1 レイアウト耐性
+- 長いテキストは必ず省略（ellipsis）
+- 金額表示は改行禁止（nowrap）
+- モバイル最小タップ領域は 44px
+
+### 4.2 入力UX
+- 金額入力時、初期値が `0` の場合はフォーカス時に自動クリア
+- From / To に同一口座は選択不可（バリデーション必須）
+
+---
+
+## 5. Drag & Drop ルール
+
+- @dnd-kit を使用する
+- モバイルではハンドルの長押しでのみ発火
+- 並び順は order フィールドで Firestore に保存
+- 並び替え後は即時UI反映
+
+---
+
+## 6. 実装時の禁止行為
+
+- 要件にない機能を「便利そうだから」追加しない
+- 設計書（Requirements / todo.md）を無視しない
+- 「とりあえず動く」コードを残さない
+- 型を any で逃げない
+
+---
+
+## 7. AIへの指示ルール（重要）
+
+- 実装前に「どの ToDo を実装するか」を明示する
+- 不明点があれば **勝手に決めず質問する**
+- 変更を加えた場合は、どの仕様に基づくかコメントで明示する
+
+---
+
+## 8. MVP完了条件
+
+- todo.md の「MVP 完了条件」をすべて満たしていること
+- 残高計算が常に一貫していること
+- 翌月も同じアプリを使いたいと感じるUXであること

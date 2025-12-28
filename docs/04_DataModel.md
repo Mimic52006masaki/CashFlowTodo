@@ -1,45 +1,30 @@
 # データ設計（簡易）
 
-## エンティティ一覧
+## テーブル一覧
+
+### User
+- id
+- auth_type（google / anonymous）
+- created_at
 
 ### Account
-
 - id
+- user_id
 - name
-- category（bank / cash / eMoney）
-- balance
+- initial_balance
+- color
 - created_at
 
-### BudgetTask
-
+### TransferTodo
 - id
-- session_id
-- type
-- amount
+- user_id
 - from_account_id
 - to_account_id
+- amount
 - memo
+- order
 - is_completed
-- created_at
-
-### MonthlySession
-
-- id
-- salary_date
-- salary_amount
-- carryover_amount
-- budget_amount
-- created_at
-
-### TaskTemplate
-
-- id
-- name
-- tasks: BudgetTask[]
-- created_at
 
 ## リレーション
-
-- MonthlySession 1 --- \* BudgetTask
-- Account 1 --- \* BudgetTask（from / to）
-- User 1 --- \* TaskTemplate
+- User 1 --- * Account
+- User 1 --- * TransferTodo
