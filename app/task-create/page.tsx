@@ -20,6 +20,9 @@ export default function TaskCreate() {
     toAccountId: '',
     memo: '',
   })
+  const [errors, setErrors] = useState<{[key: string]: string}>({})
+  const [isLoading, setIsLoading] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
 
   useEffect(() => {
     if (!user) {
@@ -43,10 +46,29 @@ export default function TaskCreate() {
     }
   }
 
+  const validateForm = () => {
+    const newErrors: {[key: string]: string} = {}
+    if (!form.amount || isNaN(Number(form.amount)) || Number(form.amount) <= 0) {
+      newErrors.amount = '有効な金額を入力してください'
+    }
+    if ((type === 'withdraw' || type === 'transfer') && !form.fromAccountId) {
+      newErrors.fromAccountId = '出金元口座を選択してください'
+    }
+    if ((type === 'deposit' || type === 'transfer' || type === 'charge') && !form.toAccountId) {
+      newErrors.toAccountId = '入金先口座を選択してください'
+    }
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user || !session) return
 
+    if (!validateForm()) return
+
+    setIsLoading(true)
+    setMessage(null)
     try {
       await addBudgetTask(user.uid, {
         sessionId: session.id,
@@ -57,9 +79,13 @@ export default function TaskCreate() {
         memo: form.memo,
         isCompleted: false,
       })
-      router.push('/')
+      setMessage('保存しました')
+      setTimeout(() => router.push('/'), 1000)
     } catch (error) {
       console.error(error)
+      setMessage('保存に失敗しました')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -74,6 +100,11 @@ export default function TaskCreate() {
   return (
     <main className="p-4 max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold mb-8">タスク作成 ({type})</h1>
+      {message && (
+        <p className={`mb-4 ${message.includes('失敗') ? 'text-red-500' : 'text-green-500'}`}>
+          {message}
+        </p>
+      )}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block mb-2">金額</label>
@@ -85,6 +116,7 @@ export default function TaskCreate() {
             className="w-full p-2 border rounded"
             required
           />
+          {errors.amount && <p className="text-red-500 text-sm mt-1">{errors.amount}</p>}
         </div>
         {(type === 'withdraw' || type === 'transfer') && (
           <div>
@@ -103,6 +135,7 @@ export default function TaskCreate() {
                 </option>
               ))}
             </select>
+            {errors.fromAccountId && <p className="text-red-500 text-sm mt-1">{errors.fromAccountId}</p>}
           </div>
         )}
         {(type === 'deposit' || type === 'transfer' || type === 'charge') && (
@@ -122,6 +155,7 @@ export default function TaskCreate() {
                 </option>
               ))}
             </select>
+            {errors.toAccountId && <p className="text-red-500 text-sm mt-1">{errors.toAccountId}</p>}
           </div>
         )}
         <div>
@@ -134,8 +168,8 @@ export default function TaskCreate() {
             className="w-full p-2 border rounded"
           />
         </div>
-        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
-          保存
+        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded" disabled={isLoading}>
+          {isLoading ? '保存中...' : '保存'}
         </button>
       </form>
     </main>

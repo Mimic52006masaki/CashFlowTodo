@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '../../lib/auth'
-import { addAccount, addMonthlySession } from '../../lib/firestore'
+import { addAccount, addMonthlySession, getAppUser, getTaskTemplates, addBudgetTask } from '../../lib/firestore'
 
 export default function InitialSetup() {
   const { user } = useAuth()
@@ -16,26 +16,51 @@ export default function InitialSetup() {
     carryoverAmount: '',
     budgetAmount: '',
   })
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user) return
 
+    setLoading(true)
+    setMessage('')
     try {
       await addAccount(user.uid, {
         name: form.accountName,
         category: 'bank',
         balance: parseInt(form.initialBalance),
       })
-      await addMonthlySession(user.uid, {
+      const sessionId = await addMonthlySession(user.uid, {
         salaryDate: new Date(form.salaryDate),
         salaryAmount: parseInt(form.salaryAmount),
         carryoverAmount: parseInt(form.carryoverAmount),
         budgetAmount: parseInt(form.budgetAmount),
       })
-      router.push('/')
+
+      // Apply default template if exists
+      const appUser = await getAppUser(user.uid)
+      if (appUser?.defaultTemplateId) {
+        const templates = await getTaskTemplates(user.uid)
+        const defaultTemplate = templates.find(t => t.id === appUser.defaultTemplateId)
+        if (defaultTemplate) {
+          for (const task of defaultTemplate.tasks) {
+            await addBudgetTask(user.uid, {
+              ...task,
+              sessionId,
+              isCompleted: false,
+            })
+          }
+        }
+      }
+
+      setMessage('保存しました')
+      setTimeout(() => router.push('/'), 1000)
     } catch (error) {
       console.error(error)
+      setMessage('エラーが発生しました')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -46,6 +71,7 @@ export default function InitialSetup() {
   return (
     <main className="p-4 max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold mb-8">初回設定</h1>
+      {message && <p className={`mb-4 ${message.includes('エラー') ? 'text-red-500' : 'text-green-500'}`}>{message}</p>}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block mb-2">口座名</label>
@@ -113,8 +139,8 @@ export default function InitialSetup() {
             required
           />
         </div>
-        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
-          保存
+        <button type="submit" disabled={loading} className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50">
+          {loading ? '保存中...' : '保存'}
         </button>
       </form>
     </main>

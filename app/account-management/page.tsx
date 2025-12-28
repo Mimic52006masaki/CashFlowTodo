@@ -16,6 +16,7 @@ export default function AccountManagement() {
   const router = useRouter()
   const [accounts, setAccounts] = useState<Account[]>([])
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [confirmingId, setConfirmingId] = useState<string | null>(null)
   const [form, setForm] = useState<{
     name: string
     category: AccountCategory
@@ -88,16 +89,23 @@ export default function AccountManagement() {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!user) return
-    if (!confirm('本当に削除しますか？')) return
+  const handleDeleteClick = (id: string) => {
+    setConfirmingId(id)
+  }
 
+  const handleConfirmDelete = async () => {
+    if (!user || !confirmingId) return
     try {
-      await deleteAccount(user.uid, id)
+      await deleteAccount(user.uid, confirmingId)
       fetchAccounts()
+      setConfirmingId(null)
     } catch (error) {
       console.error(error)
     }
+  }
+
+  const handleCancelDelete = () => {
+    setConfirmingId(null)
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -186,7 +194,7 @@ export default function AccountManagement() {
                 編集
               </button>
               <button
-                onClick={() => handleDelete(account.id)}
+                onClick={() => handleDeleteClick(account.id)}
                 className="bg-red-500 text-white px-3 py-1 rounded"
               >
                 削除
@@ -195,6 +203,28 @@ export default function AccountManagement() {
           </li>
         ))}
       </ul>
+
+      {confirmingId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded shadow-lg">
+            <p className="mb-4">本当にこの口座を削除しますか？</p>
+            <div className="flex space-x-4">
+              <button
+                onClick={handleConfirmDelete}
+                className="bg-red-500 text-white px-4 py-2 rounded"
+              >
+                はい
+              </button>
+              <button
+                onClick={handleCancelDelete}
+                className="bg-gray-500 text-white px-4 py-2 rounded"
+              >
+                いいえ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }

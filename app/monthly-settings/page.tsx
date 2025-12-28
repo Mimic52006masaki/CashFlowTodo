@@ -8,6 +8,7 @@ import {
   updateMonthlySession,
   getTaskTemplates,
   addBudgetTask,
+  getBudgetTasks,
 } from '../../lib/firestore'
 import { MonthlySession, TaskTemplate } from '../../lib/types'
 
@@ -17,6 +18,8 @@ export default function MonthlySettings() {
   const [session, setSession] = useState<MonthlySession | null>(null)
   const [templates, setTemplates] = useState<TaskTemplate[]>([])
   const [selectedTemplateId, setSelectedTemplateId] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState('')
   const [form, setForm] = useState({
     salaryDate: '',
     salaryAmount: '',
@@ -57,6 +60,8 @@ export default function MonthlySettings() {
     e.preventDefault()
     if (!user || !session) return
 
+    setLoading(true)
+    setMessage('')
     try {
       await updateMonthlySession(user.uid, session.id, {
         salaryDate: new Date(form.salaryDate),
@@ -64,9 +69,13 @@ export default function MonthlySettings() {
         carryoverAmount: parseInt(form.carryoverAmount),
         budgetAmount: parseInt(form.budgetAmount),
       })
-      router.push('/')
+      setMessage('保存しました')
+      setTimeout(() => router.push('/'), 1000)
     } catch (error) {
       console.error(error)
+      setMessage('エラーが発生しました')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -76,17 +85,32 @@ export default function MonthlySettings() {
     const selectedTemplate = templates.find((t) => t.id === selectedTemplateId)
     if (!selectedTemplate) return
 
+    setLoading(true)
+    setMessage('')
     try {
+      // Get existing tasks to avoid duplicates
+      const existingTasks = await getBudgetTasks(user.uid, session.id)
+      const existingTaskKeys = new Set(
+        existingTasks.map(t => `${t.type}-${t.amount}-${t.memo || ''}-${t.fromAccountId || ''}-${t.toAccountId || ''}`)
+      )
+
       for (const task of selectedTemplate.tasks) {
-        await addBudgetTask(user.uid, {
-          ...task,
-          sessionId: session.id,
-          isCompleted: false,
-        })
+        const taskKey = `${task.type}-${task.amount}-${task.memo || ''}-${task.fromAccountId || ''}-${task.toAccountId || ''}`
+        if (!existingTaskKeys.has(taskKey)) {
+          await addBudgetTask(user.uid, {
+            ...task,
+            sessionId: session.id,
+            isCompleted: false,
+          })
+        }
       }
-      router.push('/')
+      setMessage('テンプレートを適用しました')
+      setTimeout(() => router.push('/'), 1000)
     } catch (error) {
       console.error(error)
+      setMessage('エラーが発生しました')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -101,6 +125,7 @@ export default function MonthlySettings() {
   return (
     <main className="p-4 max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold mb-8">月次設定</h1>
+      {message && <p className={`mb-4 ${message.includes('エラー') ? 'text-red-500' : 'text-green-500'}`}>{message}</p>}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block mb-2">給与日</label>
@@ -146,8 +171,8 @@ export default function MonthlySettings() {
             required
           />
         </div>
-        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
-          保存
+        <button type="submit" disabled={loading} className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50">
+          {loading ? '保存中...' : '保存'}
         </button>
       </form>
 
@@ -168,10 +193,10 @@ export default function MonthlySettings() {
           </select>
           <button
             onClick={handleApplyTemplate}
-            disabled={!selectedTemplateId}
+            disabled={loading || !selectedTemplateId}
             className="bg-green-500 text-white px-4 py-2 rounded disabled:opacity-50"
           >
-            適用
+            {loading ? '適用中...' : '適用'}
           </button>
         </div>
       </div>

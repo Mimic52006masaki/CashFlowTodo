@@ -3,6 +3,8 @@ import {
   collection,
   doc,
   getDocs,
+  getDoc,
+  setDoc,
   addDoc,
   updateDoc,
   deleteDoc,
@@ -10,7 +12,7 @@ import {
   orderBy,
   runTransaction,
 } from 'firebase/firestore'
-import { Account, BudgetTask, MonthlySession, TaskTemplate } from './types'
+import { Account, BudgetTask, MonthlySession, TaskTemplate, AppUser } from './types'
 
 // Accounts CRUD
 export const getAccounts = async (userId: string): Promise<Account[]> => {
@@ -223,4 +225,30 @@ export const updateTaskTemplate = async (
 export const deleteTaskTemplate = async (userId: string, templateId: string) => {
   const docRef = doc(db, 'users', userId, 'taskTemplates', templateId)
   await deleteDoc(docRef)
+}
+
+// AppUser CRUD
+export const getAppUser = async (userId: string): Promise<AppUser | null> => {
+  const docRef = doc(db, 'users', userId)
+  const docSnap = await getDoc(docRef)
+  if (docSnap.exists()) {
+    return {
+      id: docSnap.id,
+      ...docSnap.data(),
+      createdAt: docSnap.data().createdAt.toDate(),
+    } as AppUser
+  }
+  return null
+}
+
+export const addAppUser = async (userId: string) => {
+  const docRef = doc(db, 'users', userId)
+  await setDoc(docRef, {
+    createdAt: new Date(),
+  })
+}
+
+export const updateAppUser = async (userId: string, updates: Partial<AppUser>) => {
+  const docRef = doc(db, 'users', userId)
+  await updateDoc(docRef, updates)
 }

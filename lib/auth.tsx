@@ -15,6 +15,7 @@ import {
   signOut,
 } from 'firebase/auth'
 import { auth } from './firebase'
+import { addAppUser } from './firestore'
 
 interface AuthContextType {
   user: User | null
@@ -42,7 +43,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   }
 
   const register = async (email: string, password: string) => {
-    await createUserWithEmailAndPassword(auth, email, password)
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+    await addAppUser(userCredential.user.uid)
   }
 
   const logout = async () => {

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '../../lib/auth'
-import { getTaskTemplates, addTaskTemplate, deleteTaskTemplate } from '../../lib/firestore'
+import { getTaskTemplates, addTaskTemplate, deleteTaskTemplate, getAppUser, updateAppUser } from '../../lib/firestore'
 import { TaskTemplate } from '../../lib/types'
 
 export default function Templates() {
@@ -11,6 +11,7 @@ export default function Templates() {
   const router = useRouter()
   const [templates, setTemplates] = useState<TaskTemplate[]>([])
   const [newTemplateName, setNewTemplateName] = useState('')
+  const [defaultTemplateId, setDefaultTemplateId] = useState('')
 
   useEffect(() => {
     if (!user) {
@@ -25,6 +26,8 @@ export default function Templates() {
     try {
       const tmpls = await getTaskTemplates(user.uid)
       setTemplates(tmpls)
+      const appUser = await getAppUser(user.uid)
+      setDefaultTemplateId(appUser?.defaultTemplateId || '')
     } catch (error) {
       console.error(error)
     }
@@ -58,6 +61,16 @@ export default function Templates() {
     }
   }
 
+  const handleSetDefault = async () => {
+    if (!user) return
+    try {
+      await updateAppUser(user.uid, { defaultTemplateId: defaultTemplateId || undefined })
+      alert('デフォルトテンプレートを設定しました')
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   if (!user) {
     return <div>Loading...</div>
   }
@@ -81,6 +94,30 @@ export default function Templates() {
           新規作成
         </button>
       </form>
+
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold mb-4">デフォルトテンプレート設定</h2>
+        <div className="space-y-4">
+          <select
+            value={defaultTemplateId}
+            onChange={(e) => setDefaultTemplateId(e.target.value)}
+            className="w-full p-2 border rounded"
+          >
+            <option value="">デフォルトなし</option>
+            {templates.map((template) => (
+              <option key={template.id} value={template.id}>
+                {template.name}
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={handleSetDefault}
+            className="bg-green-500 text-white px-4 py-2 rounded"
+          >
+            設定
+          </button>
+        </div>
+      </div>
 
       <ul className="space-y-2">
         {templates.map((template) => (

@@ -35,3 +35,9 @@ export interface TaskTemplate {
   tasks: Omit<BudgetTask, 'id' | 'sessionId' | 'isCompleted' | 'createdAt'>[]
   createdAt: Date
 }
+
+export interface AppUser {
+  id: string
+  defaultTemplateId?: string
+  createdAt: Date
+}
