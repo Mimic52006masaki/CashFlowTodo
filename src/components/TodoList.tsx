@@ -18,6 +18,13 @@ interface TodoListProps {
 }
 
 export function TodoList({ transferTodos, accounts, incompleteTodoIds, completedTodoIds, completedCount, onAddTodo, onToggleTodo, onEditTodo, onDeleteTodo }: TodoListProps) {
+  const renderAccountLabel = (todo: TransferTodo) => {
+    if (todo.toName && todo.toName.trim() !== '') {
+      return `${todo.fromName} → ${todo.toName}`;
+    }
+    return todo.fromName; // payment 用
+  };
+
   return (
     <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar pb-20">
       <div className="flex items-center justify-between mb-5 sticky top-0 bg-background-main z-10 py-2">
@@ -31,7 +38,6 @@ export function TodoList({ transferTodos, accounts, incompleteTodoIds, completed
         <SortableContext items={incompleteTodoIds} strategy={verticalListSortingStrategy}>
           {transferTodos.filter(t => !t.completed).map(todo => {
             const fromAccount = accounts.find(a => a.id === todo.fromId);
-            const toAccount = accounts.find(a => a.id === todo.toId);
             const isLowBalance = fromAccount && fromAccount.balance < todo.amount;
             return (
               <SortableItem key={todo.id} id={todo.id} onClick={() => onToggleTodo(todo.id)} className={`bg-white p-5 rounded-lg shadow-sm border border-border-light hover:shadow-md transition-shadow group ${isLowBalance ? 'border-warning-red/30' : ''}`} actions={
@@ -51,9 +57,9 @@ export function TodoList({ transferTodos, accounts, incompleteTodoIds, completed
                     <ArrowRightLeft className="w-5 h-5" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-primary-charcoal font-semibold truncate text-base group-hover:text-cool-blue transition-colors">{todo.note || `${fromAccount?.name} → ${toAccount?.name}`}</p>
+                    <p className="text-primary-charcoal font-semibold truncate text-base group-hover:text-cool-blue transition-colors">{todo.note || renderAccountLabel(todo)}</p>
                     <p className="text-dark-blue-gray/70 text-sm mt-1 flex items-center gap-2">
-                      <span className="font-medium bg-border-light/50 px-2 py-0.5 rounded text-xs text-dark-blue-gray">{fromAccount?.name}</span>
+                      <span className="font-medium bg-border-light/50 px-2 py-0.5 rounded text-xs text-dark-blue-gray">{renderAccountLabel(todo)}</span>
                       {isLowBalance && (
                         <>
                           <span className="size-1 bg-dark-blue-gray/30 rounded-full"></span>
@@ -84,7 +90,6 @@ export function TodoList({ transferTodos, accounts, incompleteTodoIds, completed
         <div className="space-y-4 mb-8 max-h-96 overflow-y-auto">
           <SortableContext items={completedTodoIds} strategy={verticalListSortingStrategy}>
             {transferTodos.filter(t => t.completed).map(todo => {
-              const fromAccount = accounts.find(a => a.id === todo.fromId);
               return (
                 <SortableItem key={todo.id} id={todo.id} onClick={() => onToggleTodo(todo.id)} className="bg-white/60 p-5 rounded-lg shadow-sm border border-border-light/60 opacity-70 grayscale-[0.5] hover:opacity-100 hover:grayscale-0 transition-all" actions={
                   <button onClick={async (e) => { e.stopPropagation(); if(confirm('この完了済みタスクを削除しますか？')) onDeleteTodo(todo.id); }} className="p-2 hover:bg-red-50 rounded-full transition-colors text-slate-400 hover:text-red-500">
@@ -96,8 +101,8 @@ export function TodoList({ transferTodos, accounts, incompleteTodoIds, completed
                       <ArrowRightLeft className="w-5 h-5" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-primary-charcoal font-semibold truncate line-through decoration-dark-blue-gray">{todo.note || `${fromAccount?.name} 振替`}</p>
-                      <p className="text-dark-blue-gray/70 text-sm mt-1">{fromAccount?.name}</p>
+                      <p className="text-primary-charcoal font-semibold truncate line-through decoration-dark-blue-gray">{todo.note || renderAccountLabel(todo)}</p>
+                      <p className="text-dark-blue-gray/70 text-sm mt-1">{renderAccountLabel(todo)}</p>
                     </div>
                     <div className="text-right flex flex-col items-end gap-1">
                       <p className="text-dark-blue-gray font-bold text-lg line-through">¥{todo.amount.toLocaleString()}</p>

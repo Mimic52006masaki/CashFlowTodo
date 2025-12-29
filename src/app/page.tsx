@@ -50,14 +50,31 @@ const SortableItem = ({ id, children, className, onClick, actions }: { id: strin
   };
 
   return (
-    <div ref={setNodeRef} style={style} className={className} onClick={onClick}>
-      <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-2 hover:bg-slate-100 rounded text-slate-400 shrink-0">
+    <div ref={setNodeRef} style={style} className={className}>
+      {/* ドラッグ専用ハンドル */}
+      <div
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing p-2 hover:bg-slate-100 rounded text-slate-400 shrink-0"
+        onClick={(e) => e.stopPropagation()}
+      >
         <GripVertical className="w-4 h-4" />
       </div>
-      <div className="flex-1 flex items-center justify-between min-w-0">
+      {/* クリック領域 */}
+      <div
+        className="flex-1 flex items-center justify-between min-w-0 cursor-pointer"
+        onClick={onClick}
+      >
         {children}
       </div>
-      {actions && <div className="flex items-center gap-2 ml-2">{actions}</div>}
+      {actions && (
+        <div
+          className="flex items-center gap-2 ml-2"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {actions}
+        </div>
+      )}
     </div>
   );
 };
@@ -301,10 +318,13 @@ export default function HomePage() {
   };
 
   const totalBalance = accounts.reduce((sum: number, acc) => sum + acc.balance, 0);
-  const totalBudget = settings.monthlyBudgetAmount ?? 0;
-  const totalPayments = transferTodos.filter(t => t.type === 'payment' && t.completed).reduce((s, t) => s + t.amount, 0);
-  const totalSpent = Math.max(0, totalPayments - totalBudget);
-  const budgetProgress = totalBudget > 0 ? Math.min((totalPayments / totalBudget) * 100, 100) : 0;
+  const totalTodos = transferTodos.length;
+  const completedTodos = transferTodos.filter(t => t.completed).length;
+
+  const taskProgress =
+    totalTodos > 0
+      ? Math.round((completedTodos / totalTodos) * 100)
+      : 0;
 
   const accountIds = accounts.map(a => a.id);
   const incompleteTodoIds = transferTodos.filter(t => !t.completed).map(t => t.id);
@@ -368,16 +388,19 @@ export default function HomePage() {
             </div>
           </div>
           <div className="bg-white rounded-xl p-6 shadow-md border border-border-light flex flex-col justify-center h-40">
-            <div className="flex justify-between text-sm text-dark-blue-gray mb-3 font-medium">
-              <span>予算使用状況</span>
-              <span>予算額: ¥{totalBudget.toLocaleString()}</span>
+            <div className="flex justify-start text-sm text-dark-blue-gray mb-3 font-medium">
+              <span>タスク進捗</span>
             </div>
             <div className="h-3 w-full bg-border-light/50 rounded-full overflow-hidden mb-4">
-              <div className="h-full bg-accent-green rounded-full" style={{ width: `${budgetProgress}%` }}></div>
+              <div
+                className="h-full bg-accent-green rounded-full transition-all"
+                style={{ width: `${taskProgress}%` }}
+              ></div>
             </div>
-            <div className="flex justify-between items-center">
-              <p className="text-xs text-dark-blue-gray/70">使用率: {budgetProgress.toFixed(1)}%</p>
-              <span className="text-xs font-semibold text-dark-blue-gray">超過: ¥{totalSpent.toLocaleString()}</span>
+            <div className="flex justify-start items-center">
+              <p className="text-xs text-dark-blue-gray/70">
+                {completedTodos} / {totalTodos} 完了（{taskProgress}%）
+              </p>
             </div>
           </div>
         </div>
@@ -501,6 +524,9 @@ export default function HomePage() {
                 return;
               }
 
+              const fromAccount = accounts.find(a => a.id === fromId);
+              const toAccount = accounts.find(a => a.id === toId);
+
               const inputNote = (f.get('note') as string)?.trim();
 
               const note =
@@ -509,7 +535,11 @@ export default function HomePage() {
               const d = {
                 type,
                 fromId,
-                ...(type !== 'payment' && { toId }),
+                fromName: fromAccount?.name ?? '',
+                ...(type !== 'payment' && {
+                  toId,
+                  toName: toAccount?.name ?? '',
+                }),
                 amount,
                 note,
                 completed: editingTodo?.completed || false,
