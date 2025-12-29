@@ -339,82 +339,86 @@ export default function HomePage() {
   return (
     <DndContext onDragEnd={handleDragEnd} sensors={sensors}>
       <div className="bg-background-main font-sans text-text-dark selection:bg-cool-blue selection:text-white flex min-h-screen">
-      <div className="w-64 bg-background-sidebar shadow-lg flex flex-col p-6 border-r border-border-light shrink-0 z-10">
-        <div className="mb-8 flex flex-col h-full">
-          <h2 className="text-lg font-bold text-primary-charcoal mb-6 flex items-center gap-2">
-            <ArrowRightLeft className="text-cool-blue w-5 h-5" />
-            口座
-          </h2>
-          <div className="space-y-4 mb-4">
+      {/* Sidebar */}
+      <aside className="hidden lg:flex w-72 bg-white border-r border-slate-200 flex-col z-30 shrink-0 h-full">
+        <div className="p-6 border-b border-slate-50">
+          <div className="flex items-center gap-2 mb-6">
+            <div className="bg-cool-blue rounded-lg p-1.5 text-white">
+              <ArrowRightLeft className="w-5 h-5" />
+            </div>
+            <h2 className="text-lg font-black tracking-tight">CashFlowTodo</h2>
+          </div>
+          <div className="bg-slate-900 rounded-xl p-4 text-white shadow-lg">
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Total Assets</p>
+            <p className="text-xl font-black">¥{totalBalance.toLocaleString()}</p>
+          </div>
+        </div>
+
+        <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">連携口座</p>
+          <div className="flex flex-col gap-3">
             <SortableContext items={accountIds} strategy={verticalListSortingStrategy}>
               {accounts.map(acc => (
-                <SortableItem key={acc.id} id={acc.id} className="group bg-white border border-border-light rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => { setEditingAccount(acc); setIsAccountModalOpen(true); }}>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-xs font-bold text-dark-blue-gray/60 uppercase tracking-wide">{acc.name}</span>
-                  </div>
-                  <p className="text-xl font-bold text-primary-charcoal tracking-tight">¥{acc.balance.toLocaleString()}</p>
+                <SortableItem key={acc.id} id={acc.id} className="bg-slate-50 border border-slate-100 rounded-xl p-3 group hover:border-cool-blue/30 transition-all cursor-pointer" onClick={() => { setEditingAccount(acc); setIsAccountModalOpen(true); }}>
+                  <p className="text-[10px] font-bold text-slate-400 truncate">{acc.name}</p>
+                  <p className="text-sm font-black text-slate-800">¥{acc.balance.toLocaleString()}</p>
                 </SortableItem>
               ))}
             </SortableContext>
+            <button onClick={() => { setEditingAccount(null); setIsAccountModalOpen(true); }} className="border-2 border-dashed border-slate-200 rounded-xl p-3 flex items-center justify-center text-slate-400 hover:text-cool-blue hover:border-cool-blue transition-all">
+              <Plus className="w-5 h-5" />
+            </button>
           </div>
-          <button
-            onClick={() => { setEditingAccount(null); setIsAccountModalOpen(true); }}
-            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 border-dashed border-cool-blue/30 text-cool-blue font-semibold hover:bg-cool-blue/5 hover:border-cool-blue transition-all group"
-          >
-            <Plus className="group-hover:scale-110 transition-transform" />
-            <span>口座を追加</span>
-          </button>
         </div>
-        <div className="mt-auto pt-6 border-t border-border-light">
-          <p className="text-xs font-bold text-dark-blue-gray/60 uppercase tracking-wide mb-2">総資産</p>
-          <p className="text-2xl font-bold text-cool-blue tracking-tight">¥{totalBalance.toLocaleString()}</p>
-        </div>
-      </div>
-      <div className="flex-1 flex flex-col p-8 overflow-hidden relative">
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold text-primary-charcoal mb-2">資金概要</h1>
-          <p className="text-dark-blue-gray/70">財務状況の簡潔なサマリー</p>
+      </aside>
+      <div className="flex-1 flex flex-col h-full overflow-hidden">
+        <header className="bg-white lg:bg-transparent border-b lg:border-none p-4 lg:p-8 shrink-0 z-20">
+          <div className="max-w-4xl mx-auto space-y-4">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1 bg-cool-blue rounded-2xl p-5 lg:p-6 text-white shadow-xl shadow-blue-100 flex items-center justify-between relative overflow-hidden group cursor-pointer hover:shadow-lg transition-shadow" onClick={() => { setIsBudgetModalOpen(true); }}>
+                <div className="absolute -right-10 -top-10 size-32 bg-white/10 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-700"></div>
+                <div>
+                  <p className="text-blue-100 font-bold text-xs mb-1">今月の予算額</p>
+                  <h3 className="text-3xl lg:text-4xl font-black tracking-tighter">¥{settings.monthlyBudgetAmount ? settings.monthlyBudgetAmount.toLocaleString() : '未設定'}</h3>
+                </div>
+                <div className="bg-white/20 backdrop-blur-sm px-3 py-2 rounded-xl border border-white/10 text-center">
+                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">Remaining</p>
+                  <p className="text-sm font-black">¥{settings.monthlyBudgetAmount ? (settings.monthlyBudgetAmount - (totalBalance - (accounts.find(a => a.id === settings.monthlyBudgetAccountId)?.balance || 0))).toLocaleString() : '0'}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="lg:hidden">
+              <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                {accounts.map(acc => (
+                  <div key={acc.id} className="bg-slate-50 border border-slate-100 rounded-xl p-3 min-w-[140px] shrink-0 cursor-pointer hover:border-cool-blue/30 transition-all" onClick={() => { setEditingAccount(acc); setIsAccountModalOpen(true); }}>
+                    <p className="text-[9px] font-bold text-slate-400 truncate">{acc.name}</p>
+                    <p className="text-sm font-black text-slate-800">¥{acc.balance.toLocaleString()}</p>
+                  </div>
+                ))}
+                <button onClick={() => { setEditingAccount(null); setIsAccountModalOpen(true); }} className="bg-slate-100/30 border border-slate-100 rounded-xl px-4 flex items-center justify-center shrink-0 cursor-pointer hover:text-cool-blue hover:border-cool-blue transition-all">
+                  <Plus className="w-4 h-4 text-slate-400" />
+                </button>
+              </div>
+            </div>
+          </div>
         </header>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-cool-blue text-white rounded-xl p-6 shadow-md relative overflow-hidden flex flex-col justify-between h-40 cursor-pointer hover:shadow-lg transition-shadow" onClick={() => { setIsBudgetModalOpen(true); }}>
-            <div className="absolute -top-8 -right-8 size-32 bg-white/10 rounded-full blur-2xl"></div>
-            <div className="relative z-10">
-              <p className="text-sm font-medium opacity-80 mb-2">今月の予算</p>
-              <p className="text-4xl font-bold tracking-tight">¥{settings.monthlyBudgetAmount ? settings.monthlyBudgetAmount.toLocaleString() : '未設定'}</p>
-            </div>
-            <div className="relative z-10 flex items-center gap-2 text-sm font-medium opacity-90">
-              <ArrowRightLeft className="w-5 h-5" />
-              <span>{accounts.find(a => a.id === settings.monthlyBudgetAccountId)?.name ?? '未設定'}</span>
-            </div>
+
+        <section className="flex-1 flex flex-col overflow-hidden px-4 lg:px-8">
+          <div className="max-w-4xl mx-auto w-full flex flex-col h-full">
+            <TodoList
+              transferTodos={transferTodos}
+              accounts={accounts}
+              incompleteTodoIds={incompleteTodoIds}
+              completedTodoIds={completedTodoIds}
+              completedCount={completedCount}
+              onAddTodo={() => { setEditingTodo(null); setIsTodoModalOpen(true); }}
+              onToggleTodo={toggleTodo}
+              onEditTodo={(todo) => { setEditingTodo(todo); setIsTodoModalOpen(true); }}
+              onDeleteTodo={async (id) => { if(confirm('このタスクを削除しますか？')) await TransferTodoRepository.deleteTransferTodo(id); await refreshTransferTodos(); }}
+            />
           </div>
-          <div className="bg-white rounded-xl p-6 shadow-md border border-border-light flex flex-col justify-center h-40">
-            <div className="flex justify-start text-sm text-dark-blue-gray mb-3 font-medium">
-              <span>タスク進捗</span>
-            </div>
-            <div className="h-3 w-full bg-border-light/50 rounded-full overflow-hidden mb-4">
-              <div
-                className="h-full bg-accent-green rounded-full transition-all"
-                style={{ width: `${taskProgress}%` }}
-              ></div>
-            </div>
-            <div className="flex justify-start items-center">
-              <p className="text-xs text-dark-blue-gray/70">
-                {completedTodos} / {totalTodos} 完了（{taskProgress}%）
-              </p>
-            </div>
-          </div>
-        </div>
-        <TodoList
-          transferTodos={transferTodos}
-          accounts={accounts}
-          incompleteTodoIds={incompleteTodoIds}
-          completedTodoIds={completedTodoIds}
-          completedCount={completedCount}
-          onAddTodo={() => { setEditingTodo(null); setIsTodoModalOpen(true); }}
-          onToggleTodo={toggleTodo}
-          onEditTodo={(todo) => { setEditingTodo(todo); setIsTodoModalOpen(true); }}
-          onDeleteTodo={async (id) => { if(confirm('このタスクを削除しますか？')) await TransferTodoRepository.deleteTransferTodo(id); await refreshTransferTodos(); }}
-        />
+        </section>
       </div>
       {/* Account Modal */}
       {isAccountModalOpen && (
