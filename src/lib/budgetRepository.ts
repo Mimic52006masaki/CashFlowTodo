@@ -1,44 +1,26 @@
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db, auth, appId } from './firebase';
-import { collection, doc, getDocs, addDoc, updateDoc, deleteDoc, orderBy, query } from 'firebase/firestore';
-import { Budget } from './types';
+import { Settings } from './types';
 
 export class BudgetRepository {
-  static async getBudgets(): Promise<Budget[]> {
+  private static readonly COLLECTION = 'settings';
+  private static readonly DOC_ID = 'global';
+
+  static async getSettings(): Promise<Settings> {
     if (!auth.currentUser) throw new Error('User not authenticated');
 
-    const budgetsCollection = collection(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'budgets');
-    const q = query(budgetsCollection, orderBy('amount', 'desc'));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as Budget));
+    const docRef = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, this.COLLECTION, this.DOC_ID);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data() as Settings;
+    }
+    return { autoResetEnabled: false };
   }
 
-  static async createBudget(budget: Omit<Budget, 'id'>): Promise<string> {
+  static async updateSettings(settings: Partial<Settings>): Promise<void> {
     if (!auth.currentUser) throw new Error('User not authenticated');
 
-    const budgetsCollection = collection(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'budgets');
-    const docRef = await addDoc(budgetsCollection, {
-      ...budget,
-      userId: auth.currentUser.uid,
-    });
-    return docRef.id;
-  }
-
-  static async updateBudget(id: string, budget: Partial<Budget>): Promise<void> {
-    if (!auth.currentUser) throw new Error('User not authenticated');
-
-    const budgetsCollection = collection(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'budgets');
-    const docRef = doc(budgetsCollection, id);
-    await updateDoc(docRef, budget);
-  }
-
-  static async deleteBudget(id: string): Promise<void> {
-    if (!auth.currentUser) throw new Error('User not authenticated');
-
-    const budgetsCollection = collection(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'budgets');
-    const docRef = doc(budgetsCollection, id);
-    await deleteDoc(docRef);
+    const docRef = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, this.COLLECTION, this.DOC_ID);
+    await setDoc(docRef, settings, { merge: true });
   }
 }

@@ -1,6 +1,6 @@
-import { Account, TransferTodo, Budget } from './types';
+import { Account, TransferTodo } from './types';
 
-export function calculateBalances(accounts: Account[], transferTodos: TransferTodo[], budgets: Budget[] = []): Account[] {
+export function calculateBalances(accounts: Account[], transferTodos: TransferTodo[]): Account[] {
   const balances = new Map<string, number>();
 
   // 初期残高を設定
@@ -30,7 +30,3 @@ export function calculateBalances(accounts: Account[], transferTodos: TransferTo
   }));
 }
 
-export function calculateBudgetRemaining(budget: Budget, transferTodos: TransferTodo[]): number {
-  const spent = transferTodos.filter(t => t.fromId === budget.accountId && t.completed && (t.type === 'payment' || t.type === 'budget_adjustment')).reduce((sum, t) => sum + t.amount, 0);
-  return budget.amount - spent;
-}

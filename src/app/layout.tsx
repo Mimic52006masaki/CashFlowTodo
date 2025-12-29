@@ -17,6 +17,46 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
+      <head>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&amp;display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet" />
+        <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+        <script id="tailwind-config" dangerouslySetInnerHTML={{
+          __html: `
+            tailwind.config = {
+              darkMode: "class",
+              theme: {
+                extend: {
+                  colors: {
+                    "primary-charcoal": "#263238",
+                    "dark-blue-gray": "#37474F",
+                    "cool-blue": "#42A5F5",
+                    "accent-green": "#66BB6A",
+                    "text-light": "#ECEFF1",
+                    "text-dark": "#263238",
+                    "background-main": "#F8FAFC",
+                    "background-sidebar": "#FFFFFF",
+                    "border-light": "#E0E0E0",
+                    "warning-red": "#EF5350",
+                  },
+                  fontFamily: {
+                    "sans": ["Noto Sans JP", "Inter", "sans-serif"]
+                  },
+                  borderRadius: {"DEFAULT": "0.75rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+              },
+            }
+          `
+        }} />
+        <style type="text/tailwindcss" dangerouslySetInnerHTML={{
+          __html: `
+            .line-icon {
+              font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            }
+          `
+        }} />
+      </head>
       <body className={inter.className}>
         <AppProvider>
           {children}

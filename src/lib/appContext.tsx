@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from 'firebase/auth';
-import { Account, TransferTodo, Budget } from './types';
+import { Account, TransferTodo, Settings } from './types';
 import { calculateBalances } from './balanceCalculator';
 import { AccountRepository } from './accountRepository';
 import { TransferTodoRepository } from './transferTodoRepository';
@@ -12,14 +12,13 @@ interface AppContextType {
   user: User | null;
   accounts: Account[];
   transferTodos: TransferTodo[];
-  budgets: Budget[];
+  settings: Settings;
   completedCount: number;
   progress: number;
-  currentBalances: Account[];
   setUser: (user: User | null) => void;
   refreshAccounts: () => Promise<void>;
   refreshTransferTodos: () => Promise<void>;
-  refreshBudgets: () => Promise<void>;
+  refreshSettings: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -28,11 +27,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [transferTodos, setTransferTodos] = useState<TransferTodo[]>([]);
-  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [settings, setSettings] = useState<Settings>({ autoResetEnabled: false, monthlyBudgetAmount: undefined, monthlyBudgetAccountId: undefined });
 
   const completedCount = transferTodos.filter(todo => todo.completed).length;
   const progress = transferTodos.length > 0 ? (completedCount / transferTodos.length) * 100 : 0;
-  const currentBalances = calculateBalances(accounts, transferTodos, budgets);
 
   const refreshAccounts = async () => {
     if (user) {
@@ -48,10 +46,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const refreshBudgets = async () => {
+  const refreshSettings = async () => {
     if (user) {
-      const fetchedBudgets = await BudgetRepository.getBudgets();
-      setBudgets(fetchedBudgets);
+      const fetchedSettings = await BudgetRepository.getSettings();
+      setSettings(fetchedSettings);
     }
   };
 
@@ -59,11 +57,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (user) {
       refreshAccounts();
       refreshTransferTodos();
-      refreshBudgets();
+      refreshSettings();
     } else {
       setAccounts([]);
       setTransferTodos([]);
-      setBudgets([]);
+      setSettings({ autoResetEnabled: false });
     }
   }, [user]);
 
@@ -72,14 +70,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       user,
       accounts,
       transferTodos,
-      budgets,
+      settings,
       completedCount,
       progress,
-      currentBalances,
       setUser,
       refreshAccounts,
       refreshTransferTodos,
-      refreshBudgets,
+      refreshSettings,
     }}>
       {children}
     </AppContext.Provider>
